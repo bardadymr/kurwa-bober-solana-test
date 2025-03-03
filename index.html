@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurwa Bober SOL v1.0</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #1e1e2e;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .tab {
+            overflow: hidden;
+            border-bottom: 1px solid #444;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+            color: #ccc;
+        }
+        .tab button:hover {
+            background-color: #333;
+        }
+        .tab button.active {
+            background-color: #9945FF;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border-top: none;
+        }
+        input, select {
+            width: 95%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #282a36;
+            color: white;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #9945FF;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: rgb(157, 20, 243);
+        }
+        .key-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .key-container input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .add-key {
+            width: auto;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .remove-btn {
+            background-color: #ff4545;
+            width: 40px;
+            margin: 0;
+            margin-left: 10px;
+        }
+        .remove-btn:hover {
+            background-color: #ff2525;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+        }
+        .status-pending {
+            background-color: #555;
+        }
+        .status-success {
+            background-color: #285;
+        }
+        .status-error {
+            background-color: #852;
+        }
+        .buyAmountContainer {
+            display: none;
+            margin-top: 5px;
+            padding: 5px 5px 5px 30px;
+            background-color: #282a36;
+            border-radius: 5px;
+        }
+        h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #9945FF;
+        }
+        .tx-url {
+            color: #9945FF;
+            text-decoration: none;
+        }
+        .tx-url:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Kurwa Bober SOL v1.0</h2>
+        
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'Sell')">Token Selling</button>
+            <button class="tablinks" onclick="openTab(event, 'Snipe')">Token Sniping</button>
+        </div>
+        
+        <div id="Sell" class="tabcontent" style="display: block;">
+            <h3>Sell Tokens (Multiple Wallets)</h3>
+            
+            <div id="sellKeysContainer">
+                <div class="key-container">
+                    <input type="password" class="privateKey" placeholder="Enter Private Key">
+                    <button class="remove-btn" onclick="removeKeyField(this)">X</button>
+                </div>
+            </div>
+            
+            <button class="add-key" onclick="addKeyField('sellKeysContainer')">+ Add Wallet</button>
+            
+            <input type="text" id="sellTokenAddress" placeholder="Enter Token Address to Sell">
+            <button onclick="sellTokens()">Sell KURWA!</button>
+            
+            <div id="sellStatus"></div>
+        </div>
+        
+        <div id="Snipe" class="tabcontent">
+            <h3>Token Sniping</h3>
+            
+            <div id="snipeKeysContainer">
+                <div class="key-container">
+                    <input type="password" class="privateKey" placeholder="Enter Private Key">
+                    <button class="remove-btn" onclick="removeKeyField(this)">X</button>
+                    <button class="add-key" onclick="toggleBuyAmount(this)" style="width:auto;margin:0;margin-left:10px;">Set SOL</button>
+                    <div class="buyAmountContainer">
+                        <input type="number" class="buyAmount" placeholder="Buy Amount in SOL" step="0.01" min="0.01" value="0.01">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="add-key" onclick="addKeyField('snipeKeysContainer')">+ Add Wallet</button>
+            
+            <input type="text" id="targetWalletAddress" placeholder="Enter Target Wallet Address to Monitor">
+            
+            <div id="sniperControls">
+                <button id="startSniperBtn" onclick="startSniper()">Start Sniping</button>
+                <button id="stopSniperBtn" onclick="stopSniper()" style="display:none;background-color:#ff4545;">Stop Sniping</button>
+            </div>
+            
+            <div id="snipeStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Add key field
+        function addKeyField(containerId) {
+            const container = document.getElementById(containerId);
+            const keyCount = container.getElementsByClassName('key-container').length;
+            
+            if (keyCount >= 5) {
+                alert("Maximum 5 wallets allowed");
+                return;
+            }
+            
+            const keyContainer = document.createElement('div');
+            keyContainer.className = 'key-container';
+            
+            const input = document.createElement('input');
+            input.type = 'password';
+            input.className = 'privateKey';
+            input.placeholder = 'Enter Private Key';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = 'X';
+            removeBtn.onclick = function() { removeKeyField(this); };
+            
+            keyContainer.appendChild(input);
+            keyContainer.appendChild(removeBtn);
+            
+            if (containerId === 'snipeKeysContainer') {
+                const setBuyAmountBtn = document.createElement('button');
+                setBuyAmountBtn.className = 'add-key';
+                setBuyAmountBtn.textContent = 'Set SOL';
+                setBuyAmountBtn.style = 'width:auto;margin:0;margin-left:10px;';
+                setBuyAmountBtn.onclick = function() { toggleBuyAmount(this); };
+                
+                const buyAmountContainer = document.createElement('div');
+                buyAmountContainer.className = 'buyAmountContainer';
+                
+                const buyAmountInput = document.createElement('input');
+                buyAmountInput.type = 'number';
+                buyAmountInput.className = 'buyAmount';
+                buyAmountInput.placeholder = 'Buy Amount in SOL';
+                buyAmountInput.step = '0.01';
+                buyAmountInput.min = '0.01';
+                buyAmountInput.value = '0.01';
+                
+                buyAmountContainer.appendChild(buyAmountInput);
+                keyContainer.appendChild(setBuyAmountBtn);
+                keyContainer.appendChild(buyAmountContainer);
+            }
+            
+            container.appendChild(keyContainer);
+        }
+        
+        // Remove key field
+        function removeKeyField(button) {
+            const parent = button.parentElement;
+            const container = parent.parentElement;
+            if (container.getElementsByClassName('key-container').length > 1) {
+                container.removeChild(parent);
+            } else {
+                alert("At least one wallet is required");
+            }
+        }
+        
+        // Toggle buy amount visibility
+        function toggleBuyAmount(button) {
+            const parent = button.parentElement;
+            const buyAmountContainer = parent.querySelector('.buyAmountContainer');
+            if (buyAmountContainer.style.display === 'block') {
+                buyAmountContainer.style.display = 'none';
+            } else {
+                buyAmountContainer.style.display = 'block';
+            }
+        }
+        
+        // Get private keys from container
+        function getPrivateKeys(containerId) {
+            const container = document.getElementById(containerId);
+            const keyInputs = container.getElementsByClassName('privateKey');
+            const keys = [];
+            
+            for (let input of keyInputs) {
+                if (input.value.trim() !== '') {
+                    keys.push(input.value.trim());
+                }
+            }
+            
+            return keys;
+        }
+        
+        // Get buy amounts for each key
+        function getBuyAmounts() {
+            const container = document.getElementById('snipeKeysContainer');
+            const keyContainers = container.getElementsByClassName('key-container');
+            const buyAmounts = [];
+            
+            for (let keyContainer of keyContainers) {
+                const buyAmountInput = keyContainer.querySelector('.buyAmount');
+                if (buyAmountInput) {
+                    buyAmounts.push(parseFloat(buyAmountInput.value) || 0.01);
+                } else {
+                    buyAmounts.push(0.01); // Default value
+                }
+            }
+            
+            return buyAmounts;
+        }
+        
+        // Sell Tokens Function
+        async function sellTokens() {
+            const keys = getPrivateKeys('sellKeysContainer');
+            const tokenAddress = document.getElementById('sellTokenAddress').value.trim();
+            const statusElement = document.getElementById('sellStatus');
+            
+            if (keys.length === 0) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: Please enter at least one private key";
+                return;
+            }
+            
+            if (!tokenAddress) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: Please enter a token address";
+                return;
+            }
+            
+            statusElement.className = 'status-pending';
+            statusElement.innerHTML = "Processing sell request for " + keys.length + " wallets...";
+            
+            try {
+                const response = await fetch("/api/tokens/sell-bundle", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        privateKeys: keys,
+                        tokenAddress: tokenAddress
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusElement.className = 'status-success';
+                    let resultHTML = `<p>Successfully initiated sell transactions for ${keys.length} wallets:</p>`;
+                    
+                    if (data.transactions && data.transactions.length > 0) {
+                        resultHTML += "<ul>";
+                        data.transactions.forEach(tx => {
+                            resultHTML += `<li>Wallet: ${tx.wallet.substring(0, 6)}...${tx.wallet.substring(tx.wallet.length - 4)}`;
+                            if (tx.signature) {
+                                resultHTML += ` - <a class="tx-url" href="https://solscan.io/tx/${tx.signature}" target="_blank">View Transaction</a>`;
+                            } else if (tx.error) {
+                                resultHTML += ` - Error: ${tx.error}`;
+                            }
+                            resultHTML += `</li>`;
+                        });
+                        resultHTML += "</ul>";
+                    }
+                    
+                    statusElement.innerHTML = resultHTML;
+                } else {
+                    statusElement.className = 'status-error';
+                    statusElement.innerHTML = "Error: " + (data.error || "Unknown error occurred");
+                }
+            } catch (error) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: " + (error.message || "Failed to connect to server");
+            }
+        }
+        
+        // Sniper variables
+        let sniperActive = false;
+        let sniperStatusInterval;
+        
+        // Start token sniper
+        async function startSniper() {
+            const keys = getPrivateKeys('snipeKeysContainer');
+            const targetWalletAddress = document.getElementById('targetWalletAddress').value.trim();
+            const buyAmounts = getBuyAmounts();
+            const statusElement = document.getElementById('snipeStatus');
+            
+            if (keys.length === 0) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: Please enter at least one private key";
+                return;
+            }
+            
+            if (!targetWalletAddress) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: Please enter a target wallet address";
+                return;
+            }
+            
+            statusElement.className = 'status-pending';
+            statusElement.innerHTML = "Starting token sniper...";
+            
+            try {
+                const response = await fetch("/api/tokens/sniper/start", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        privateKeys: keys,
+                        targetWalletAddress: targetWalletAddress,
+                        buyAmounts: buyAmounts
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sniperActive = true;
+                    document.getElementById('startSniperBtn').style.display = 'none';
+                    document.getElementById('stopSniperBtn').style.display = 'block';
+                    
+                    statusElement.className = 'status-success';
+                    statusElement.innerHTML = "Sniper successfully started! Watching target wallet for new tokens...";
+                    
+                    // Start interval to check sniper status
+                    sniperStatusInterval = setInterval(checkSniperStatus, 5000);
+                } else {
+                    statusElement.className = 'status-error';
+                    statusElement.innerHTML = "Error: " + (data.error || "Unknown error occurred");
+                }
+            } catch (error) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: " + (error.message || "Failed to connect to server");
+            }
+        }
+        
+        // Stop token sniper
+        async function stopSniper() {
+            const statusElement = document.getElementById('snipeStatus');
+            
+            if (!sniperActive) {
+                return;
+            }
+            
+            statusElement.className = 'status-pending';
+            statusElement.innerHTML = "Stopping token sniper...";
+            
+            try {
+                const response = await fetch("/api/tokens/sniper/stop", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+                
+                const data = await response.json();
+                
+                clearInterval(sniperStatusInterval);
+                sniperActive = false;
+                document.getElementById('startSniperBtn').style.display = 'block';
+                document.getElementById('stopSniperBtn').style.display = 'none';
+                
+                if (response.ok) {
+                    statusElement.className = 'status-success';
+                    statusElement.innerHTML = "Sniper successfully stopped!";
+                } else {
+                    statusElement.className = 'status-error';
+                    statusElement.innerHTML = "Error stopping sniper: " + (data.error || "Unknown error occurred");
+                }
+            } catch (error) {
+                statusElement.className = 'status-error';
+                statusElement.innerHTML = "Error: " + (error.message || "Failed to connect to server");
+            }
+        }
+        
+        // Check sniper status
+        async function checkSniperStatus() {
+            if (!sniperActive) {
+                return;
+            }
+            
+            try {
+                const response = await fetch("/api/tokens/sniper/status");
+                const data = await response.json();
+                
+                if (!data.active) {
+                    sniperActive = false;
+                    document.getElementById('startSniperBtn').style.display = 'block';
+                    document.getElementById('stopSniperBtn').style.display = 'none';
+                    clearInterval(sniperStatusInterval);
+                    
+                    const statusElement = document.getElementById('snipeStatus');
+                    statusElement.className = 'status-error';
+                    statusElement.innerHTML = "Sniper stopped unexpectedly. Please restart.";
+                    return;
+                }
+                
+                if (data.recentTokens && data.recentTokens.length > 0) {
+                    const statusElement = document.getElementById('snipeStatus');
+                    let resultHTML = `<p>Sniper active. Found ${data.recentTokens.length} tokens:</p><ul>`;
+                    
+                    data.recentTokens.forEach(token => {
+                        resultHTML += `<li>Token: ${token.address.substring(0, 8)}...`;
+                        if (token.buyTransactions && token.buyTransactions.length > 0) {
+                            resultHTML += ` - Bought on ${token.buyTransactions.length} wallets`;
+                        }
+                        resultHTML += `</li>`;
+                    });
+                    
+                    resultHTML += "</ul>";
+                    statusElement.innerHTML = resultHTML;
+                }
+            } catch (error) {
+                console.error("Error checking sniper status:", error);
+            }
+        }
+    </script>
+</body>
+</html>
